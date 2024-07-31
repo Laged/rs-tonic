@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package hotel;
+
+service HotelService {
+  rpc SendData (HotelData) returns (HotelResponse);
+}
+
+message HotelData {
+  uint32 hotel_room_device = 1; // 3 fields of 8 bits: hotel_id, room_id, device_id
+  repeated SensorData sensors = 2;
+}
+
+message SensorData {
+  uint32 sensor_values = 1; // 2 fields of 4 bits: sensor_1, sensor_2
+}
+
+message HotelResponse {
+  string message = 1;
+}
+

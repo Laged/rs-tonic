@@ -313,6 +313,7 @@ name = "hello-tonic"
 version = "0.0.0"
 dependencies = [
  "prost",
+ "rand",
  "tokio",
  "tonic",
  "tonic-build",
