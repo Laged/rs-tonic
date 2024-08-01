@@ -1,14 +1,37 @@
 use tonic::{transport::Server, Request, Response, Status};
+use std::sync::{Arc, Mutex};
 use hotel::hotel_service_server::{HotelService, HotelServiceServer};
-use hotel::{HotelData, HotelResponse, SensorData};
+use hotel::{HotelData, HotelResponse};
 
 pub mod hotel {
-    tonic::include_proto!("hotel"); // The string specified here must match the proto package name
+    tonic::include_proto!("hotel");
 }
 
-#[derive(Debug, Default)]
-pub struct MyHotelService {}
+#[derive(Clone, Default, Debug)]
+pub struct Processed {
+    pub count: Arc<Mutex<u64>>,
+}
+impl Processed {
+    pub fn new() -> Self {
+        Self {
+            count: Arc::new(Mutex::new(0))
+        }
+    }
+    pub fn increment(&self) {
+        let mut lock = self.count.lock().unwrap();
+        *lock += 1;
+    }
+    pub fn current(&self) -> u64 {
+        let lock = self.count.lock().unwrap();
+        lock.clone()
+    }
+}
 
+
+#[derive(Debug, Default)]
+pub struct MyHotelService {
+    count: Processed
+}
 #[tonic::async_trait]
 impl HotelService for MyHotelService {
     async fn send_data(
@@ -20,20 +43,13 @@ impl HotelService for MyHotelService {
         let hotel_id = (data.hotel_room_device >> 24) & 0xFF;
         let room_id = (data.hotel_room_device >> 16) & 0xFF;
         let device_id = (data.hotel_room_device >> 8) & 0xFF;
-
-        println!(
-            "Received data from Hotel ID: {}, Room ID: {}, Device ID: {}",
-            hotel_id, room_id, device_id
-        );
-
+        
+        self.count.increment();
+        let current = self.count.current();
         for sensor in data.sensors {
             let sensor_1 = (sensor.sensor_values >> 4) & 0xF;
             let sensor_2 = sensor.sensor_values & 0xF;
-
-            println!(
-                "Sensor Value 1: {}, Sensor Value 2: {}",
-                sensor_1, sensor_2
-            );
+            print!("\r{:08b},{:08b},{:08b},{:08b},{:08b} {:?}", hotel_id, room_id, device_id, sensor_1, sensor_2, current);
         }
 
         let reply = hotel::HotelResponse {
@@ -49,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
     let hotel_service = MyHotelService::default();
 
-    println!("HotelServiceServer listening on {}", addr);
+    println!("HotelServiceServer!");
 
     Server::builder()
         .add_service(HotelServiceServer::new(hotel_service))
