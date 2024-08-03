@@ -1,7 +1,7 @@
-use tonic::{transport::Server, Request, Response, Status};
-use std::sync::{Arc, Mutex};
 use hotel::hotel_service_server::{HotelService, HotelServiceServer};
 use hotel::{HotelData, HotelResponse};
+use std::sync::{Arc, Mutex};
+use tonic::{transport::Server, Request, Response, Status};
 
 pub mod hotel {
     tonic::include_proto!("hotel");
@@ -14,7 +14,7 @@ pub struct Processed {
 impl Processed {
     pub fn new() -> Self {
         Self {
-            count: Arc::new(Mutex::new(0))
+            count: Arc::new(Mutex::new(0)),
         }
     }
     pub fn increment(&self) {
@@ -27,10 +27,9 @@ impl Processed {
     }
 }
 
-
 #[derive(Debug, Default)]
 pub struct MyHotelService {
-    count: Processed
+    count: Processed,
 }
 #[tonic::async_trait]
 impl HotelService for MyHotelService {
@@ -43,13 +42,16 @@ impl HotelService for MyHotelService {
         let hotel_id = (data.hotel_room_device >> 24) & 0xFF;
         let room_id = (data.hotel_room_device >> 16) & 0xFF;
         let device_id = (data.hotel_room_device >> 8) & 0xFF;
-        
+
         self.count.increment();
         let current = self.count.current();
         for sensor in data.sensors {
             let sensor_1 = (sensor.sensor_values >> 4) & 0xF;
             let sensor_2 = sensor.sensor_values & 0xF;
-            print!("\r{:08b},{:08b},{:08b},{:08b},{:08b} {:?}", hotel_id, room_id, device_id, sensor_1, sensor_2, current);
+            print!(
+                "\r{:08b},{:08b},{:08b},{:08b},{:08b} {:?}",
+                hotel_id, room_id, device_id, sensor_1, sensor_2, current
+            );
         }
 
         let reply = hotel::HotelResponse {
@@ -74,4 +76,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-

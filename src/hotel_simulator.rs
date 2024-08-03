@@ -1,5 +1,5 @@
+use crate::hotel_tools::Hotel;
 use rand::Rng;
-use crate::hotel_tools::{Hotel};
 
 pub fn simulate(hotels: &mut Vec<Hotel>) {
     let mut rng = rand::thread_rng();
@@ -18,4 +18,3 @@ pub fn simulate(hotels: &mut Vec<Hotel>) {
     }
     println!(" # of sensors simulated!");
 }
-

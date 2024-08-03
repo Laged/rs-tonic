@@ -30,7 +30,11 @@ pub struct Sensor {
 
 impl fmt::Display for Sensor {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:08b}{:08b}{:08b}", self.leg_id, self.value1, self.value2)
+        write!(
+            f,
+            "{:08b}{:08b}{:08b}",
+            self.leg_id, self.value1, self.value2
+        )
     }
 }
 
@@ -72,8 +76,16 @@ pub fn generate(config: Config) -> Vec<Hotel> {
             let mut devices = Vec::with_capacity(config.devices);
             for device_id in 0..config.devices as u8 {
                 let sensors = vec![
-                    Sensor { leg_id: 0, value1: rand::thread_rng().gen(), value2: rand::thread_rng().gen() },
-                    Sensor { leg_id: 1, value1: rand::thread_rng().gen(), value2: rand::thread_rng().gen() },
+                    Sensor {
+                        leg_id: 0,
+                        value1: rand::thread_rng().gen(),
+                        value2: rand::thread_rng().gen(),
+                    },
+                    Sensor {
+                        leg_id: 1,
+                        value1: rand::thread_rng().gen(),
+                        value2: rand::thread_rng().gen(),
+                    },
                 ];
                 devices.push(Device { device_id, sensors });
             }

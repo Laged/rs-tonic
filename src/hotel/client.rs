@@ -1,8 +1,8 @@
-use tonic::{Request};
+use hello_tonic::hotel_simulator::simulate;
+use hello_tonic::hotel_tools::{generate, Config};
 use hotel::hotel_service_client::HotelServiceClient;
 use hotel::{HotelData, SensorData};
-use hello_tonic::hotel_tools::{Config, generate};
-use hello_tonic::hotel_simulator::simulate;
+use tonic::Request;
 
 pub mod hotel {
     tonic::include_proto!("hotel");
@@ -23,8 +23,8 @@ impl std::fmt::Display for Value {
 }
 
 struct Packet {
-  ids: Value,
-  sensors: Value
+    ids: Value,
+    sensors: Value,
 }
 
 impl Packet {
@@ -38,7 +38,7 @@ impl Packet {
 
 impl std::fmt::Display for Packet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.ids, self.sensors) 
+        write!(f, "{} {}", self.ids, self.sensors)
     }
 }
 
@@ -50,13 +50,16 @@ fn pack_sensor_values(sensor_1: u8, sensor_2: u8) -> u32 {
     ((sensor_1 as u32) << 4) | (sensor_2 as u32)
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = HotelServiceClient::connect("http://[::1]:50051").await?;
     println!("HotelServiceClient!");
     let mut prog: u64 = 0;
-    let config = Config { hotels: 100, rooms: 50, devices: 2 };
+    let config = Config {
+        hotels: 100,
+        rooms: 50,
+        devices: 2,
+    };
     let mut hotels = generate(config);
 
     simulate(&mut hotels);
@@ -65,14 +68,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         for room in hotel.rooms {
             for device in room.devices {
                 let hotel_room_device = pack_ids(hotel.hotel_id, room.room_id, device.device_id);
-                let sensors: Vec<SensorData> = device.sensors.iter().map(|sensor| {
-                    let sensor_values = pack_sensor_values(sensor.value1, sensor.value2);
-                    let packet = Packet::new(hotel_room_device, sensor_values);
-                    prog += 1;
-                    print!("\r{}\t{}", packet, prog);
-                    //print!("\x1B[2J\x1B[1;1H");
-                    SensorData { sensor_values }
-                }).collect();
+                let sensors: Vec<SensorData> = device
+                    .sensors
+                    .iter()
+                    .map(|sensor| {
+                        let sensor_values = pack_sensor_values(sensor.value1, sensor.value2);
+                        let packet = Packet::new(hotel_room_device, sensor_values);
+                        prog += 1;
+                        print!("\r{}\t{}", packet, prog);
+                        //print!("\x1B[2J\x1B[1;1H");
+                        SensorData { sensor_values }
+                    })
+                    .collect();
                 let request = Request::new(HotelData {
                     hotel_room_device,
                     sensors,
@@ -84,4 +91,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
